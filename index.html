@@ -4,13 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Guanafood - Control de Ventas</title>
-  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3075/3075977.png" type="image/png">
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3075/3075977.png">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
-    body { padding: 20px; background-color: #f9f9f9; }
+    body { padding: 20px; background: #f9f9f9; }
     .venta-item { border-bottom: 1px solid #ccc; padding: 5px 0; }
     #logo { width: 60px; margin-right: 10px; }
     #top-bar { display: flex; align-items: center; margin-bottom: 20px; }
+    #historial { max-height: 300px; overflow-y: auto; }
   </style>
 </head>
 <body>
@@ -62,7 +63,7 @@
     <div id="historial" class="mb-3"></div>
     <p><strong>Total: ₡<span id="total">0</span></strong></p>
 
-    <button id="descargarPDF" class="btn btn-success">Descargar PDF (Captura)</button>
+    <button id="descargarPDF" class="btn btn-success">Descargar PDF (Solo Historial)</button>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -71,20 +72,21 @@
   <script>
     const precios = { desayuno:2500, almuerzo:2500, cena:2500, agua:2000 };
     const historialDiv = document.getElementById('historial');
-    const totalSpan = document.getElementById('total');
+    const totalSpan   = document.getElementById('total');
 
     function cargarHistorial() {
       const ventas = JSON.parse(localStorage.getItem('ventas')||'[]');
       historialDiv.innerHTML = '';
       let total=0;
       ventas.forEach(v=>{
-        if(!v.fecha) return;
-        const sub = v.desayuno*precios.desayuno + v.almuerzo*precios.almuerzo
-                  + v.cena*precios.cena + v.agua*precios.agua;
-        total+=sub;
+        const sub = v.desayuno*precios.desayuno 
+                  + v.almuerzo*precios.almuerzo
+                  + v.cena*precios.cena 
+                  + v.agua*precios.agua;
+        total += sub;
         const d = document.createElement('div');
-        d.className='venta-item';
-        d.textContent = `${v.fecha}: D=${v.desayuno}, A=${v.almuerzo}, C=${v.cena}, B=${v.agua} → ₡${sub}`;
+        d.className = 'venta-item';
+        d.textContent = `${v.fecha} — Desayuno: ${v.desayuno}, Almuerzo: ${v.almuerzo}, Cena: ${v.cena}, Bidón de Agua: ${v.agua} → ₡${sub}`;
         historialDiv.appendChild(d);
       });
       totalSpan.textContent = total;
@@ -100,16 +102,16 @@
         agua: parseInt(document.getElementById('agua').value)||0
       };
       if(!v.fecha) return alert('Selecciona una fecha');
-      if(v.desayuno<0||v.almuerzo<0||v.cena<0||v.agua<0) return alert('Cantidades ≥0');
-      let arr=JSON.parse(localStorage.getItem('ventas')||'[]');
+      if(v.desayuno<0||v.almuerzo<0||v.cena<0||v.agua<0) return alert('Cantidades ≥ 0');
+      let arr = JSON.parse(localStorage.getItem('ventas')||'[]');
       arr.push(v);
-      localStorage.setItem('ventas', JSON.stringify(arr));
+      localStorage.setItem('ventas',JSON.stringify(arr));
       cargarHistorial();
       e.target.reset();
     });
 
     document.getElementById('reiniciar').onclick = ()=>{
-      if(confirm('¿Borrar todo el historial?')) {
+      if(confirm('¿Borrar todo el historial?')){
         localStorage.removeItem('ventas');
         cargarHistorial();
       }
@@ -118,10 +120,13 @@
     document.getElementById('descargarPDF').onclick = async ()=>{
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
-      const canvas = await html2canvas(document.body);
+      // Solo capturamos el div de historial
+      const canvas = await html2canvas(historialDiv);
       const img = canvas.toDataURL('image/png');
-      doc.addImage(img,'PNG',0,0,doc.internal.pageSize.getWidth(),doc.internal.pageSize.getHeight());
-      doc.save('ventas_captura.pdf');
+      const w = doc.internal.pageSize.getWidth();
+      const h = (canvas.height * w) / canvas.width;
+      doc.addImage(img,'PNG',0,0,w,h);
+      doc.save('historial_captura.pdf');
     };
 
     cargarHistorial();
