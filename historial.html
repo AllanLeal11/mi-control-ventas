@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Guanafood - Historial</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <style> body{padding:20px;background:#f9f9f9} .venta-item{border-bottom:1px solid #ccc;padding:5px 0;} </style>
+  <style>
+    body { padding: 20px; background: #f9f9f9; }
+    .venta-item { border-bottom: 1px solid #ccc; padding: 5px 0; }
+    #resultado { max-height: 400px; overflow-y: auto; margin-bottom: 1em; }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -23,8 +27,10 @@
         <button class="btn btn-primary w-100" onclick="filtrar()">Filtrar</button>
       </div>
     </div>
-    <div id="resultado" class="mb-3"></div>
+
+    <div id="resultado"></div>
     <p><strong>Total filtrado: ₡<span id="totalFiltrado">0</span></strong></p>
+
     <button class="btn btn-success me-2" onclick="descargarPDF()">Descargar PDF</button>
     <a href="index.html" class="btn btn-secondary">Volver</a>
   </div>
@@ -34,38 +40,44 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     const precios = { desayuno:2500, almuerzo:2500, cena:2500, agua:2000 };
+    const resultadoDiv = document.getElementById('resultado');
+    const totalSpan    = document.getElementById('totalFiltrado');
 
     function filtrar() {
       const desde = document.getElementById('desde').value;
       const hasta = document.getElementById('hasta').value;
       const ventas = JSON.parse(localStorage.getItem('ventas')||'[]');
-      const res = document.getElementById('resultado');
-      res.innerHTML='';
-      let total=0;
+      resultadoDiv.innerHTML = '';
+      let total = 0;
       ventas.forEach(v=>{
-        if((!desde||v.fecha>=desde)&&(!hasta||v.fecha<=hasta)) {
-          const sub=v.desayuno*precios.desayuno+v.almuerzo*precios.almuerzo
-                    +v.cena*precios.cena+v.agua*precios.agua;
+        if((!desde||v.fecha>=desde) && (!hasta||v.fecha<=hasta)) {
+          const sub = v.desayuno*precios.desayuno 
+                    + v.almuerzo*precios.almuerzo
+                    + v.cena*precios.cena 
+                    + v.agua*precios.agua;
           total+=sub;
-          const d=document.createElement('div');
+          const d = document.createElement('div');
           d.className='venta-item';
-          d.textContent=`${v.fecha}: D=${v.desayuno}, A=${v.almuerzo}, C=${v.cena}, B=${v.agua} → ₡${sub}`;
-          res.appendChild(d);
+          d.textContent = `${v.fecha} — Desayuno: ${v.desayuno}, Almuerzo: ${v.almuerzo}, Cena: ${v.cena}, Bidón de Agua: ${v.agua} → ₡${sub}`;
+          resultadoDiv.appendChild(d);
         }
       });
-      document.getElementById('totalFiltrado').textContent=total;
+      totalSpan.textContent = total;
     }
 
-    document.querySelector('.btn-success').onclick = async ()=>{
-      const { jsPDF }=window.jspdf;
-      const doc=new jsPDF();
-      const canvas=await html2canvas(document.body);
-      const img=canvas.toDataURL('image/png');
-      doc.addImage(img,'PNG',0,0,doc.internal.pageSize.getWidth(),doc.internal.pageSize.getHeight());
+    async function descargarPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const canvas = await html2canvas(resultadoDiv);
+      const img    = canvas.toDataURL('image/png');
+      const w = doc.internal.pageSize.getWidth();
+      const h = (canvas.height * w) / canvas.width;
+      doc.addImage(img,'PNG',0,0,w,h);
       doc.save('historial_filtrado.pdf');
-    };
+    }
 
-    window.onload=filtrar;
+    // Inicial
+    window.onload = filtrar;
   </script>
 </body>
 </html>
