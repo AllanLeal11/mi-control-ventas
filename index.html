@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guanafood - Control de Ventas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; }
+        .product-row { margin-bottom: 10px; }
+        .venta-item { border-bottom: 1px solid #ccc; padding: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4">Guanafood - Control de Ventas</h1>
+
+        <form id="venta-form">
+            <div class="row product-row">
+                <div class="col-md-4">
+                    <label for="producto" class="form-label">Producto</label>
+                    <select class="form-select" id="producto" required>
+                        <option value="Desayuno">Desayuno - ₡2500</option>
+                        <option value="Almuerzo">Almuerzo - ₡2500</option>
+                        <option value="Cena">Cena - ₡2500</option>
+                        <option value="Bidón de Agua">Bidón de Agua - ₡2000</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="cantidad" class="form-label">Cantidad</label>
+                    <input type="number" id="cantidad" class="form-control" min="1" required>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Agregar Venta</button>
+                </div>
+            </div>
+        </form>
+
+        <h3 class="mt-5">Historial de Ventas</h3>
+        <div id="historial" class="mb-3"></div>
+        <p><strong>Total: ₡<span id="total">0</span></strong></p>
+
+        <button id="descargarPDF" class="btn btn-success">Descargar PDF</button>
+        <button id="reiniciar" class="btn btn-danger ms-2">Reiniciar</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        const precios = {
+            "Desayuno": 2500,
+            "Almuerzo": 2500,
+            "Cena": 2500,
+            "Bidón de Agua": 2000
+        };
+
+        const historialDiv = document.getElementById('historial');
+        const totalSpan = document.getElementById('total');
+
+        function cargarHistorial() {
+            const data = JSON.parse(localStorage.getItem('ventas') || "[]");
+            historialDiv.innerHTML = "";
+            let total = 0;
+
+            data.forEach((venta, i) => {
+                const subtotal = venta.cantidad * precios[venta.producto];
+                total += subtotal;
+                const div = document.createElement('div');
+                div.classList.add('venta-item');
+                div.textContent = `${venta.fecha} - ${venta.producto} x ${venta.cantidad} = ₡${subtotal}`;
+                historialDiv.appendChild(div);
+            });
+
+            totalSpan.textContent = total;
+        }
+
+        document.getElementById('venta-form').addEventListener('submit', e => {
+            e.preventDefault();
+            const producto = document.getElementById('producto').value;
+            const cantidad = parseInt(document.getElementById('cantidad').value);
+            if (cantidad <= 0) {
+                alert("Cantidad debe ser mayor a cero.");
+                return;
+            }
+
+            const venta = {
+                producto,
+                cantidad,
+                fecha: new Date().toLocaleString()
+            };
+
+            const data = JSON.parse(localStorage.getItem('ventas') || "[]");
+            data.push(venta);
+            localStorage.setItem('ventas', JSON.stringify(data));
+
+            cargarHistorial();
+            e.target.reset();
+        });
+
+        document.getElementById('descargarPDF').addEventListener('click', async () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const data = JSON.parse(localStorage.getItem('ventas') || "[]");
+
+            doc.text("Historial de Ventas - Guanafood", 10, 10);
+            let y = 20;
+            let total = 0;
+            data.forEach(venta => {
+                const subtotal = venta.cantidad * precios[venta.producto];
+                doc.text(`${venta.fecha} - ${venta.producto} x ${venta.cantidad} = ₡${subtotal}`, 10, y);
+                y += 10;
+                total += subtotal;
+            });
+
+            doc.text(`
+Total: ₡${total}`, 10, y + 10);
+            doc.save("historial_ventas.pdf");
+        });
+
+        document.getElementById('reiniciar').addEventListener('click', () => {
+            if (confirm("¿Seguro que deseas borrar el historial?")) {
+                localStorage.removeItem('ventas');
+                cargarHistorial();
+            }
+        });
+
+        cargarHistorial();
+    </script>
+</body>
+</html>
