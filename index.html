@@ -2,132 +2,102 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Control de Ventas - Guanafood</title>
-  <style>
-    :root {
-      --bg: #ffffff;
-      --fg: #000000;
-      --accent: #2e7d32;
-      --error: #c62828;
-    }
-    [data-theme="dark"] {
-      --bg: #121212;
-      --fg: #e0e0e0;
-      --accent: #81c784;
-      --error: #ef5350;
-    }
-    body {
-      font-family: sans-serif;
-      background-color: var(--bg);
-      color: var(--fg);
-      margin: 0;
-      padding: 1em;
-    }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1em;
-    }
-    h1 {
-      font-size: 1.5em;
-    }
-    button, select, input {
-      margin: 0.3em 0;
-      padding: 0.4em;
-    }
-    table {
-      width: 100%;
-      margin-top: 1em;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 0.6em;
-      border: 1px solid var(--fg);
-    }
-    .error {
-      color: var(--error);
-    }
-    .total {
-      font-weight: bold;
-    }
-    @media (max-width: 600px) {
-      table, th, td {
-        font-size: 0.9em;
-      }
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Guanafood - Control de Ventas</title>
+  <!-- Bootstrap CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
 </head>
-<body>
-  <header>
-    <h1>Guanafood - Control de Ventas</h1>
-    <button id="toggleTheme">🌙 Tema</button>
-  </header>
+<body class="bg-light text-dark">
 
-  <section>
-    <label>Fecha:
-      <input type="date" id="fecha" />
-    </label>
-    <div>
-      <label>Desayunos:
-        <input type="number" min="0" id="desayunos" />
-      </label>
-      <label>Almuerzos:
-        <input type="number" min="0" id="almuerzos" />
-      </label>
-      <label>Bidones de Agua:
-        <input type="number" min="0" id="agua" />
-      </label>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-success mb-4">
+    <div class="container">
+      <a class="navbar-brand" href="#">Guanafood - Control de Ventas</a>
+      <button id="toggleTheme" class="btn btn-outline-light btn-sm">🌙 Tema</button>
     </div>
-    <button onclick="registrarVenta()">Registrar Venta</button>
-    <div id="mensaje" class="error"></div>
-  </section>
+  </nav>
 
-  <section>
-    <h2>Historial</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Desayunos</th>
-          <th>Almuerzos</th>
-          <th>Agua</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody id="tabla"></tbody>
-    </table>
-    <p class="total" id="totalGeneral">Total general: 0</p>
-    <button onclick="descargar('json')">⬇️ JSON</button>
-    <button onclick="descargar('csv')">⬇️ CSV</button>
-    <button onclick="descargarPDF()">⬇️ PDF</button>
-  </section>
+  <main class="container">
+
+    <section class="mb-4">
+      <div class="alert alert-info">
+        <h5>Productos y precios:</h5>
+        <ul>
+          <li><strong>Desayuno:</strong> ₡1,500</li>
+          <li><strong>Almuerzo:</strong> ₡2,500</li>
+          <li><strong>Bidón de Agua:</strong> ₡1,200</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="mb-4">
+      <form id="formVenta" class="row g-3">
+        <div class="col-md-4">
+          <label for="fecha" class="form-label">Fecha</label>
+          <input type="date" class="form-control" id="fecha" required />
+        </div>
+        <div class="col-md-2">
+          <label for="desayunos" class="form-label">Desayunos</label>
+          <input type="number" min="0" class="form-control" id="desayunos" value="0" />
+        </div>
+        <div class="col-md-2">
+          <label for="almuerzos" class="form-label">Almuerzos</label>
+          <input type="number" min="0" class="form-control" id="almuerzos" value="0" />
+        </div>
+        <div class="col-md-2">
+          <label for="agua" class="form-label">Bidones de Agua</label>
+          <input type="number" min="0" class="form-control" id="agua" value="0" />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="submit" class="btn btn-success w-100">Registrar Venta</button>
+        </div>
+        <div class="col-12">
+          <div id="mensaje" class="text-danger fw-bold"></div>
+        </div>
+      </form>
+    </section>
+
+    <section>
+      <h2>Historial de Ventas</h2>
+      <div class="table-responsive">
+        <table class="table table-striped table-bordered align-middle">
+          <thead class="table-success">
+            <tr>
+              <th>Fecha</th>
+              <th>Desayunos</th>
+              <th>Almuerzos</th>
+              <th>Agua</th>
+              <th>Total (₡)</th>
+            </tr>
+          </thead>
+          <tbody id="tabla"></tbody>
+        </table>
+      </div>
+      <p class="fw-bold fs-5">Total General: ₡<span id="totalGeneral">0</span></p>
+      <div class="btn-group mb-4" role="group">
+        <button class="btn btn-outline-success" onclick="descargar('json')">⬇️ JSON</button>
+        <button class="btn btn-outline-success" onclick="descargar('csv')">⬇️ CSV</button>
+        <button class="btn btn-outline-success" onclick="descargarPDF()">⬇️ PDF</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bootstrap JS Bundle CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
     const ventas = JSON.parse(localStorage.getItem("ventas") || "[]");
 
-    function registrarVenta() {
-      const fecha = document.getElementById("fecha").value;
-      const desayunos = parseInt(document.getElementById("desayunos").value) || 0;
-      const almuerzos = parseInt(document.getElementById("almuerzos").value) || 0;
-      const agua = parseInt(document.getElementById("agua").value) || 0;
+    const precios = {
+      desayuno: 1500,
+      almuerzo: 2500,
+      agua: 1200,
+    };
 
-      if (!fecha) {
-        mostrarMensaje("Debes seleccionar una fecha.");
-        return;
-      }
-      if (desayunos < 0 || almuerzos < 0 || agua < 0) {
-        mostrarMensaje("Las cantidades deben ser mayores o iguales a cero.");
-        return;
-      }
-
-      const total = desayunos * 1500 + almuerzos * 2500 + agua * 1200;
-
+    function registrarVenta(fecha, desayunos, almuerzos, agua) {
+      const total = desayunos * precios.desayuno + almuerzos * precios.almuerzo + agua * precios.agua;
       ventas.push({ fecha, desayunos, almuerzos, agua, total });
       localStorage.setItem("ventas", JSON.stringify(ventas));
-      mostrarVentas();
-      mostrarMensaje("Venta registrada correctamente.", true);
     }
 
     function mostrarVentas() {
@@ -146,13 +116,14 @@
         tabla.appendChild(row);
         totalGeneral += v.total;
       });
-      document.getElementById("totalGeneral").textContent = `Total general: ₡${totalGeneral}`;
+      document.getElementById("totalGeneral").textContent = totalGeneral;
     }
 
     function mostrarMensaje(msg, ok = false) {
       const div = document.getElementById("mensaje");
       div.textContent = msg;
-      div.style.color = ok ? "green" : "var(--error)";
+      div.classList.toggle("text-danger", !ok);
+      div.classList.toggle("text-success", ok);
       setTimeout(() => div.textContent = "", 3000);
     }
 
@@ -177,27 +148,66 @@
     }
 
     function descargarPDF() {
-      const text = ventas.map(v =>
-        `${v.fecha}: Desayunos=${v.desayunos}, Almuerzos=${v.almuerzos}, Agua=${v.agua}, Total=₡${v.total}`
-      ).join("\n");
-      const blob = new Blob([text], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "ventas.pdf";
-      a.click();
-      URL.revokeObjectURL(url);
+      if (typeof jsPDF === "undefined") {
+        alert("Necesitas conexión para descargar PDF (librería jsPDF).");
+        return;
+      }
+      const doc = new jsPDF();
+      doc.setFontSize(14);
+      doc.text("Historial de Ventas - Guanafood", 10, 10);
+      let y = 20;
+      ventas.forEach(v => {
+        const line = `${v.fecha}: Desayunos=${v.desayunos}, Almuerzos=${v.almuerzos}, Agua=${v.agua}, Total=₡${v.total}`;
+        doc.text(line, 10, y);
+        y += 10;
+        if (y > 280) {
+          doc.addPage();
+          y = 10;
+        }
+      });
+      doc.save("ventas.pdf");
     }
+
+    document.getElementById("formVenta").addEventListener("submit", e => {
+      e.preventDefault();
+      const fecha = document.getElementById("fecha").value;
+      const desayunos = parseInt(document.getElementById("desayunos").value) || 0;
+      const almuerzos = parseInt(document.getElementById("almuerzos").value) || 0;
+      const agua = parseInt(document.getElementById("agua").value) || 0;
+
+      if (!fecha) {
+        mostrarMensaje("Debes seleccionar una fecha.");
+        return;
+      }
+      if (desayunos < 0 || almuerzos < 0 || agua < 0) {
+        mostrarMensaje("Las cantidades no pueden ser negativas.");
+        return;
+      }
+      if (desayunos === 0 && almuerzos === 0 && agua === 0) {
+        mostrarMensaje("Debes registrar al menos una cantidad mayor a cero.");
+        return;
+      }
+
+      registrarVenta(fecha, desayunos, almuerzos, agua);
+      mostrarVentas();
+      mostrarMensaje("Venta registrada correctamente.", true);
+      e.target.reset();
+    });
 
     document.getElementById("toggleTheme").onclick = () => {
       const html = document.documentElement;
-      const newTheme = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
-      html.setAttribute("data-theme", newTheme);
+      if (html.getAttribute("data-bs-theme") === "dark") {
+        html.removeAttribute("data-bs-theme");
+      } else {
+        html.setAttribute("data-bs-theme", "dark");
+      }
     };
 
-    // Inicializa
     mostrarVentas();
   </script>
+
+  <!-- jsPDF CDN para PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
 </html>
 
