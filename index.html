@@ -1,55 +1,203 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="light">
+<html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>GuanaFood Solucions – Control de Ventas</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Control de Ventas - Guanafood</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #000000;
+      --accent: #2e7d32;
+      --error: #c62828;
+    }
+    [data-theme="dark"] {
+      --bg: #121212;
+      --fg: #e0e0e0;
+      --accent: #81c784;
+      --error: #ef5350;
+    }
+    body {
+      font-family: sans-serif;
+      background-color: var(--bg);
+      color: var(--fg);
+      margin: 0;
+      padding: 1em;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1em;
+    }
+    h1 {
+      font-size: 1.5em;
+    }
+    button, select, input {
+      margin: 0.3em 0;
+      padding: 0.4em;
+    }
+    table {
+      width: 100%;
+      margin-top: 1em;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 0.6em;
+      border: 1px solid var(--fg);
+    }
+    .error {
+      color: var(--error);
+    }
+    .total {
+      font-weight: bold;
+    }
+    @media (max-width: 600px) {
+      table, th, td {
+        font-size: 0.9em;
+      }
+    }
+  </style>
 </head>
 <body>
   <header>
-    <h1>Control de Ventas</h1>
-    <div class="controls">
-      <input type="date" id="datePicker" />
-      <button id="backupBtn">🔄 Copia de Seguridad</button>
-      <button id="toggleTheme">🌙</button>
-    </div>
+    <h1>Guanafood - Control de Ventas</h1>
+    <button id="toggleTheme">🌙 Tema</button>
   </header>
 
-  <main>
-    <section class="form-section">
-      <h2>Añadir Venta</h2>
-      <form id="saleForm">
-        <select id="itemSelect">
-          <option value="Desayuno">Desayuno</option>
-          <option value="Almuerzo">Almuerzo</option>
-          <option value="Bidón 10L">Bidón 10L</option>
-        </select>
-        <input type="number" id="qtyInput" placeholder="Cantidad" min="1" required />
-        <button type="submit">➕ Añadir</button>
-      </form>
-      <p id="formError" class="error"></p>
-    </section>
+  <section>
+    <label>Fecha:
+      <input type="date" id="fecha" />
+    </label>
+    <div>
+      <label>Desayunos:
+        <input type="number" min="0" id="desayunos" />
+      </label>
+      <label>Almuerzos:
+        <input type="number" min="0" id="almuerzos" />
+      </label>
+      <label>Bidones de Agua:
+        <input type="number" min="0" id="agua" />
+      </label>
+    </div>
+    <button onclick="registrarVenta()">Registrar Venta</button>
+    <div id="mensaje" class="error"></div>
+  </section>
 
-    <section class="table-section">
-      <h2>Ventas del <span id="dateLabel"></span></h2>
-      <table>
-        <thead>
-          <tr><th>Ítem</th><th>Cant.</th><th>Total (₡)</th><th></th></tr>
-        </thead>
-        <tbody id="salesTbody"></tbody>
-        <tfoot>
-          <tr><td colspan="2">TOTAL</td><td id="dayTotal">₡0</td><td></td></tr>
-        </tfoot>
-      </table>
-      <div class="export-buttons">
-        <button id="exportPdf">📄 Descargar PDF</button>
-        <button id="exportCsv">📑 Descargar CSV</button>
-      </div>
-    </section>
-  </main>
+  <section>
+    <h2>Historial</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Desayunos</th>
+          <th>Almuerzos</th>
+          <th>Agua</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="tabla"></tbody>
+    </table>
+    <p class="total" id="totalGeneral">Total general: 0</p>
+    <button onclick="descargar('json')">⬇️ JSON</button>
+    <button onclick="descargar('csv')">⬇️ CSV</button>
+    <button onclick="descargarPDF()">⬇️ PDF</button>
+  </section>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="app.js"></script>
+  <script>
+    const ventas = JSON.parse(localStorage.getItem("ventas") || "[]");
+
+    function registrarVenta() {
+      const fecha = document.getElementById("fecha").value;
+      const desayunos = parseInt(document.getElementById("desayunos").value) || 0;
+      const almuerzos = parseInt(document.getElementById("almuerzos").value) || 0;
+      const agua = parseInt(document.getElementById("agua").value) || 0;
+
+      if (!fecha) {
+        mostrarMensaje("Debes seleccionar una fecha.");
+        return;
+      }
+      if (desayunos < 0 || almuerzos < 0 || agua < 0) {
+        mostrarMensaje("Las cantidades deben ser mayores o iguales a cero.");
+        return;
+      }
+
+      const total = desayunos * 1500 + almuerzos * 2500 + agua * 1200;
+
+      ventas.push({ fecha, desayunos, almuerzos, agua, total });
+      localStorage.setItem("ventas", JSON.stringify(ventas));
+      mostrarVentas();
+      mostrarMensaje("Venta registrada correctamente.", true);
+    }
+
+    function mostrarVentas() {
+      const tabla = document.getElementById("tabla");
+      tabla.innerHTML = "";
+      let totalGeneral = 0;
+      ventas.forEach(v => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${v.fecha}</td>
+          <td>${v.desayunos}</td>
+          <td>${v.almuerzos}</td>
+          <td>${v.agua}</td>
+          <td>₡${v.total}</td>
+        `;
+        tabla.appendChild(row);
+        totalGeneral += v.total;
+      });
+      document.getElementById("totalGeneral").textContent = `Total general: ₡${totalGeneral}`;
+    }
+
+    function mostrarMensaje(msg, ok = false) {
+      const div = document.getElementById("mensaje");
+      div.textContent = msg;
+      div.style.color = ok ? "green" : "var(--error)";
+      setTimeout(() => div.textContent = "", 3000);
+    }
+
+    function descargar(tipo) {
+      let contenido = "";
+      if (tipo === "json") {
+        contenido = JSON.stringify(ventas, null, 2);
+      } else if (tipo === "csv") {
+        const header = "Fecha,Desayunos,Almuerzos,Agua,Total\n";
+        const rows = ventas.map(v =>
+          `${v.fecha},${v.desayunos},${v.almuerzos},${v.agua},${v.total}`
+        ).join("\n");
+        contenido = header + rows;
+      }
+      const blob = new Blob([contenido], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ventas.${tipo}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function descargarPDF() {
+      const text = ventas.map(v =>
+        `${v.fecha}: Desayunos=${v.desayunos}, Almuerzos=${v.almuerzos}, Agua=${v.agua}, Total=₡${v.total}`
+      ).join("\n");
+      const blob = new Blob([text], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "ventas.pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById("toggleTheme").onclick = () => {
+      const html = document.documentElement;
+      const newTheme = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      html.setAttribute("data-theme", newTheme);
+    };
+
+    // Inicializa
+    mostrarVentas();
+  </script>
 </body>
 </html>
+
