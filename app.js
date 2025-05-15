@@ -1,6 +1,0 @@
-// Productos y precios
-const PRICES = { Desayuno: 1500, Almuerzo: 2500, "Bidón 10L": 1200 };
-
-// Elementos del DOM...
-// (igual que antes)
-...
