@@ -1,153 +1,209 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Guanafood - Control de Ventas</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guanafood – Control de Ventas</title>
+  <!-- Favicon -->
   <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3075/3075977.png">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
   <style>
-    body { padding: 20px; background: #f9f9f9; }
-    .venta-item { border-bottom: 1px solid #ccc; padding: 5px 0; }
-    #historial { max-height: 300px; overflow-y: auto; }
-    .totales-producto { margin-bottom: 1em; }
+    body { background-color: #f0f2f5; }
+    #summaryTable tbody tr:hover { background: #e9f7ef; }
+    .card { box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .logo { width: 40px; }
   </style>
 </head>
 <body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom mb-4">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="#">
+        <img src="https://cdn-icons-png.flaticon.com/512/3075/3075977.png" class="logo me-2" alt="Logo">
+        Guanafood
+      </a>
+      <div class="ms-auto">
+        <a href="historial.html" class="btn btn-outline-secondary me-2">Ver Historial Completo</a>
+        <button id="resetBtn" class="btn btn-outline-danger">Reiniciar</button>
+      </div>
+    </div>
+  </nav>
+
   <div class="container">
-    <h1 class="mb-4">Guanafood - Control de Ventas</h1>
 
-    <!-- Formulario -->
-    <form id="venta-form" class="row g-3 mb-4">
-      <div class="col-md-3">
-        <label for="fecha" class="form-label">Fecha</label>
-        <input type="date" id="fecha" class="form-control" required>
+    <!-- Productos y precios -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Productos y precios</h5>
+        <ul class="list-unstyled mb-0">
+          <li>Desayuno: ₡2 500</li>
+          <li>Almuerzo: ₡2 500</li>
+          <li>Cena: ₡2 500</li>
+          <li>Bidón de Agua: ₡2 000</li>
+        </ul>
       </div>
-      <div class="col-md-2">
-        <label for="desayuno" class="form-label">Desayunos</label>
-        <input type="number" id="desayuno" class="form-control" min="0" value="0">
-      </div>
-      <div class="col-md-2">
-        <label for="almuerzo" class="form-label">Almuerzos</label>
-        <input type="number" id="almuerzo" class="form-control" min="0" value="0">
-      </div>
-      <div class="col-md-2">
-        <label for="cena" class="form-label">Cenas</label>
-        <input type="number" id="cena" class="form-control" min="0" value="0">
-      </div>
-      <div class="col-md-2">
-        <label for="agua" class="form-label">Bidones de Agua</label>
-        <input type="number" id="agua" class="form-control" min="0" value="0">
-      </div>
-      <div class="col-12">
-        <button type="submit" class="btn btn-primary">Agregar Venta</button>
-        <a href="historial.html" class="btn btn-secondary ms-2">Ver Historial</a>
-        <button id="reiniciar" type="button" class="btn btn-danger ms-2">Reiniciar</button>
-      </div>
-    </form>
-
-    <!-- Resumen de totales por producto -->
-    <div class="totales-producto">
-      <h5>Totales por producto</h5>
-      <ul>
-        <li>Desayunos vendidos: <strong><span id="total-desayuno">0</span> unidades</strong></li>
-        <li>Almuerzos vendidos: <strong><span id="total-almuerzo">0</span> unidades</strong></li>
-        <li>Cenas vendidas:   <strong><span id="total-cena">0</span> unidades</strong></li>
-        <li>Bidones vendidos: <strong><span id="total-agua">0</span> unidades</strong></li>
-      </ul>
     </div>
 
-    <!-- Historial breve -->
-    <h3>Historial (resumen)</h3>
-    <div id="historial" class="mb-3"></div>
+    <!-- Formulario de venta -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Registrar Venta</h5>
+        <form id="saleForm" class="row g-3">
+          <div class="col-md-3">
+            <label for="date" class="form-label">Fecha</label>
+            <input type="date" id="date" class="form-control" required>
+          </div>
+          <div class="col-md-2">
+            <label for="qtyBreakfast" class="form-label">Desayunos</label>
+            <input type="number" id="qtyBreakfast" class="form-control" min="0" value="0">
+          </div>
+          <div class="col-md-2">
+            <label for="qtyLunch" class="form-label">Almuerzos</label>
+            <input type="number" id="qtyLunch" class="form-control" min="0" value="0">
+          </div>
+          <div class="col-md-2">
+            <label for="qtyDinner" class="form-label">Cenas</label>
+            <input type="number" id="qtyDinner" class="form-control" min="0" value="0">
+          </div>
+          <div class="col-md-2">
+            <label for="qtyWater" class="form-label">Bidones</label>
+            <input type="number" id="qtyWater" class="form-control" min="0" value="0">
+          </div>
+          <div class="col-md-1 d-grid">
+            <button type="submit" class="btn btn-success mt-4">➕</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
-    <!-- Totales generales -->
-    <p><strong>Total general: ₡<span id="total">0</span></strong></p>
+    <!-- Resumen de ventas -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Resumen del Día</h5>
+        <div class="table-responsive">
+          <table id="summaryTable" class="table table-striped align-middle">
+            <thead class="table-success">
+              <tr>
+                <th>Fecha</th>
+                <th>Desayuno</th>
+                <th>Almuerzo</th>
+                <th>Cena</th>
+                <th>Bidón</th>
+                <th>Subtotal (₡)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot class="table-light">
+              <tr>
+                <th>Total Unidades</th>
+                <td id="totalBf">0</td>
+                <td id="totalLn">0</td>
+                <td id="totalDi">0</td>
+                <td id="totalWt">0</td>
+                <td id="totalAll">₡0</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <button id="downloadPDF" class="btn btn-primary">📄 Descargar PDF</button>
+      </div>
+    </div>
 
-    <button id="descargarPDF" class="btn btn-success">Descargar PDF (Solo Historial)</button>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    const precios = { desayuno:2500, almuerzo:2500, cena:2500, agua:2000 };
-    const historialDiv = document.getElementById('historial');
-    const totalSpan   = document.getElementById('total');
-    const tdDesayuno  = document.getElementById('total-desayuno');
-    const tdAlmuerzo  = document.getElementById('total-almuerzo');
-    const tdCena      = document.getElementById('total-cena');
-    const tdAgua      = document.getElementById('total-agua');
+    const prices = { breakfast:2500, lunch:2500, dinner:2500, water:2000 };
+    const form = document.getElementById('saleForm');
+    const tbody = document.querySelector('#summaryTable tbody');
+    const totalBf = document.getElementById('totalBf');
+    const totalLn = document.getElementById('totalLn');
+    const totalDi = document.getElementById('totalDi');
+    const totalWt = document.getElementById('totalWt');
+    const totalAll= document.getElementById('totalAll');
 
-    function cargarHistorial() {
-      const ventas = JSON.parse(localStorage.getItem('ventas')||'[]');
-      historialDiv.innerHTML = '';
-      let total=0, sumD=0, sumA=0, sumC=0, sumAg=0;
-
-      ventas.forEach(v=>{
-        sumD += v.desayuno;
-        sumA += v.almuerzo;
-        sumC += v.cena;
-        sumAg += v.agua;
-        const sub = v.desayuno*precios.desayuno 
-                  + v.almuerzo*precios.almuerzo
-                  + v.cena*precios.cena 
-                  + v.agua*precios.agua;
-        total += sub;
-        const d = document.createElement('div');
-        d.className = 'venta-item';
-        d.textContent = `${v.fecha} — Desayuno: ${v.desayuno}, Almuerzo: ${v.almuerzo}, Cena: ${v.cena}, Bidón de Agua: ${v.agua} → ₡${sub}`;
-        historialDiv.appendChild(d);
+    // Cargar & mostrar datos
+    function loadData() {
+      const data = JSON.parse(localStorage.getItem('sales')||'[]');
+      tbody.innerHTML = '';
+      let sumB=0, sumL=0, sumD=0, sumW=0, sumT=0;
+      data.forEach(item => {
+        const sub = item.bf*prices.breakfast + item.ln*prices.lunch + item.di*prices.dinner + item.wt*prices.water;
+        sumB += item.bf;
+        sumL += item.ln;
+        sumD += item.di;
+        sumW += item.wt;
+        sumT += sub;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.date}</td>
+          <td>${item.bf}</td>
+          <td>${item.ln}</td>
+          <td>${item.di}</td>
+          <td>${item.wt}</td>
+          <td>₡${sub}</td>`;
+        tbody.appendChild(tr);
       });
-
-      // Actualizar totales por producto
-      tdDesayuno.textContent = sumD;
-      tdAlmuerzo.textContent = sumA;
-      tdCena.textContent     = sumC;
-      tdAgua.textContent     = sumAg;
-      totalSpan.textContent  = total;
+      totalBf.textContent = sumB;
+      totalLn.textContent = sumL;
+      totalDi.textContent = sumD;
+      totalWt.textContent = sumW;
+      totalAll.textContent= `₡${sumT}`;
     }
 
-    // Formularios y botones
-    document.getElementById('venta-form').addEventListener('submit', e=>{
+    // Submit del formulario
+    form.addEventListener('submit', e => {
       e.preventDefault();
-      const v = {
-        fecha: document.getElementById('fecha').value,
-        desayuno: parseInt(document.getElementById('desayuno').value)||0,
-        almuerzo: parseInt(document.getElementById('almuerzo').value)||0,
-        cena: parseInt(document.getElementById('cena').value)||0,
-        agua: parseInt(document.getElementById('agua').value)||0
-      };
-      if(!v.fecha) return alert('Selecciona una fecha');
-      if(v.desayuno<0||v.almuerzo<0||v.cena<0||v.agua<0) return alert('Cantidades ≥ 0');
-      let arr = JSON.parse(localStorage.getItem('ventas')||'[]');
-      arr.push(v);
-      localStorage.setItem('ventas', JSON.stringify(arr));
-      cargarHistorial();
-      e.target.reset();
+      const date = document.getElementById('date').value;
+      const bf = +document.getElementById('qtyBreakfast').value;
+      const ln = +document.getElementById('qtyLunch').value;
+      const di = +document.getElementById('qtyDinner').value;
+      const wt = +document.getElementById('qtyWater').value;
+      if(!date) return alert('Selecciona la fecha');
+      let arr = JSON.parse(localStorage.getItem('sales')||'[]');
+      arr.push({ date, bf, ln, di, wt });
+      localStorage.setItem('sales', JSON.stringify(arr));
+      loadData();
+      form.reset();
     });
 
-    document.getElementById('reiniciar').onclick = () => {
+    // Reiniciar
+    document.getElementById('resetBtn').onclick = ()=>{
       if(confirm('¿Borrar todo el historial?')) {
-        localStorage.removeItem('ventas');
-        cargarHistorial();
+        localStorage.removeItem('sales');
+        loadData();
       }
     };
 
-    document.getElementById('descargarPDF').onclick = async () => {
+    // Descarga PDF con AutoTable
+    document.getElementById('downloadPDF').onclick = ()=>{
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
-      // Capturamos solo el div “historial”
-      const canvas = await html2canvas(historialDiv);
-      const img = canvas.toDataURL('image/png');
-      const w = doc.internal.pageSize.getWidth();
-      const h = (canvas.height * w) / canvas.width;
-      doc.addImage(img, 'PNG', 0, 0, w, h);
-      doc.save('historial_captura.pdf');
+      doc.text('Guanafood – Historial de Ventas', 14, 16);
+      doc.autoTable({
+        startY: 20,
+        head: [[ 'Fecha','Desayuno','Almuerzo','Cena','Bidón','Subtotal (₡)' ]],
+        body: Array.from(tbody.querySelectorAll('tr')).map(r =>
+          Array.from(r.querySelectorAll('td')).map(td => td.textContent)
+        ),
+        foot: [['Totales:',
+          totalBf.textContent,
+          totalLn.textContent,
+          totalDi.textContent,
+          totalWt.textContent,
+          totalAll.textContent.replace('₡','')]]
+      });
+      doc.save('historial_ventas.pdf');
     };
 
-    // Inicializar vista
-    cargarHistorial();
+    // Init
+    loadData();
   </script>
 </body>
 </html>
