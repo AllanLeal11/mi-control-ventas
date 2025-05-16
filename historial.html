@@ -9,11 +9,14 @@
     body { padding: 20px; background: #f9f9f9; }
     .venta-item { border-bottom: 1px solid #ccc; padding: 5px 0; }
     #resultado { max-height: 400px; overflow-y: auto; margin-bottom: 1em; }
+    .totales-producto { margin-bottom: 1em; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1 class="mb-4">Historial de Ventas</h1>
+
+    <!-- Filtros de fecha -->
     <div class="row mb-3">
       <div class="col-md-4">
         <label for="desde" class="form-label">Desde</label>
@@ -28,6 +31,18 @@
       </div>
     </div>
 
+    <!-- Totales por producto en el rango -->
+    <div class="totales-producto">
+      <h5>Totales por producto (filtrado)</h5>
+      <ul>
+        <li>Desayunos: <strong><span id="td-desayuno">0</span></strong></li>
+        <li>Almuerzos: <strong><span id="td-almuerzo">0</span></strong></li>
+        <li>Cenas:     <strong><span id="td-cena">0</span></strong></li>
+        <li>Bidones:   <strong><span id="td-agua">0</span></strong></li>
+      </ul>
+    </div>
+
+    <!-- Resultados filtrados -->
     <div id="resultado"></div>
     <p><strong>Total filtrado: ₡<span id="totalFiltrado">0</span></strong></p>
 
@@ -42,26 +57,40 @@
     const precios = { desayuno:2500, almuerzo:2500, cena:2500, agua:2000 };
     const resultadoDiv = document.getElementById('resultado');
     const totalSpan    = document.getElementById('totalFiltrado');
+    const tdD = document.getElementById('td-desayuno');
+    const tdA = document.getElementById('td-almuerzo');
+    const tdC = document.getElementById('td-cena');
+    const tdAg= document.getElementById('td-agua');
 
     function filtrar() {
       const desde = document.getElementById('desde').value;
       const hasta = document.getElementById('hasta').value;
       const ventas = JSON.parse(localStorage.getItem('ventas')||'[]');
       resultadoDiv.innerHTML = '';
-      let total = 0;
+      let total=0, sumD=0, sumA=0, sumC=0, sumAg=0;
+
       ventas.forEach(v=>{
         if((!desde||v.fecha>=desde) && (!hasta||v.fecha<=hasta)) {
-          const sub = v.desayuno*precios.desayuno 
+          sumD += v.desayuno;
+          sumA += v.almuerzo;
+          sumC += v.cena;
+          sumAg+= v.agua;
+          const sub = v.desayuno*precios.desayuno
                     + v.almuerzo*precios.almuerzo
-                    + v.cena*precios.cena 
+                    + v.cena*precios.cena
                     + v.agua*precios.agua;
-          total+=sub;
+          total += sub;
           const d = document.createElement('div');
           d.className='venta-item';
           d.textContent = `${v.fecha} — Desayuno: ${v.desayuno}, Almuerzo: ${v.almuerzo}, Cena: ${v.cena}, Bidón de Agua: ${v.agua} → ₡${sub}`;
           resultadoDiv.appendChild(d);
         }
       });
+
+      tdD.textContent = sumD;
+      tdA.textContent = sumA;
+      tdC.textContent = sumC;
+      tdAg.textContent= sumAg;
       totalSpan.textContent = total;
     }
 
@@ -69,14 +98,13 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       const canvas = await html2canvas(resultadoDiv);
-      const img    = canvas.toDataURL('image/png');
+      const img = canvas.toDataURL('image/png');
       const w = doc.internal.pageSize.getWidth();
       const h = (canvas.height * w) / canvas.width;
       doc.addImage(img,'PNG',0,0,w,h);
       doc.save('historial_filtrado.pdf');
     }
 
-    // Inicial
     window.onload = filtrar;
   </script>
 </body>
