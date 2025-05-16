@@ -9,30 +9,17 @@
   <style>
     body { padding: 20px; background: #f9f9f9; }
     .venta-item { border-bottom: 1px solid #ccc; padding: 5px 0; }
-    #logo { width: 60px; margin-right: 10px; }
-    #top-bar { display: flex; align-items: center; margin-bottom: 20px; }
     #historial { max-height: 300px; overflow-y: auto; }
+    .totales-producto { margin-bottom: 1em; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div id="top-bar">
-      <img id="logo" src="https://cdn-icons-png.flaticon.com/512/3075/3075977.png" alt="Logo"/>
-      <h1>Guanafood - Control de Ventas</h1>
-    </div>
+    <h1 class="mb-4">Guanafood - Control de Ventas</h1>
 
-    <div class="mb-4 alert alert-info">
-      <h5>Productos y precios</h5>
-      <ul>
-        <li><strong>Desayuno:</strong> ₡2500</li>
-        <li><strong>Almuerzo:</strong> ₡2500</li>
-        <li><strong>Cena:</strong> ₡2500</li>
-        <li><strong>Bidón de Agua:</strong> ₡2000</li>
-      </ul>
-    </div>
-
+    <!-- Formulario -->
     <form id="venta-form" class="row g-3 mb-4">
-      <div class="col-md-4">
+      <div class="col-md-3">
         <label for="fecha" class="form-label">Fecha</label>
         <input type="date" id="fecha" class="form-control" required>
       </div>
@@ -59,9 +46,23 @@
       </div>
     </form>
 
+    <!-- Resumen de totales por producto -->
+    <div class="totales-producto">
+      <h5>Totales por producto</h5>
+      <ul>
+        <li>Desayunos vendidos: <strong><span id="total-desayuno">0</span> unidades</strong></li>
+        <li>Almuerzos vendidos: <strong><span id="total-almuerzo">0</span> unidades</strong></li>
+        <li>Cenas vendidas:   <strong><span id="total-cena">0</span> unidades</strong></li>
+        <li>Bidones vendidos: <strong><span id="total-agua">0</span> unidades</strong></li>
+      </ul>
+    </div>
+
+    <!-- Historial breve -->
     <h3>Historial (resumen)</h3>
     <div id="historial" class="mb-3"></div>
-    <p><strong>Total: ₡<span id="total">0</span></strong></p>
+
+    <!-- Totales generales -->
+    <p><strong>Total general: ₡<span id="total">0</span></strong></p>
 
     <button id="descargarPDF" class="btn btn-success">Descargar PDF (Solo Historial)</button>
   </div>
@@ -73,12 +74,21 @@
     const precios = { desayuno:2500, almuerzo:2500, cena:2500, agua:2000 };
     const historialDiv = document.getElementById('historial');
     const totalSpan   = document.getElementById('total');
+    const tdDesayuno  = document.getElementById('total-desayuno');
+    const tdAlmuerzo  = document.getElementById('total-almuerzo');
+    const tdCena      = document.getElementById('total-cena');
+    const tdAgua      = document.getElementById('total-agua');
 
     function cargarHistorial() {
       const ventas = JSON.parse(localStorage.getItem('ventas')||'[]');
       historialDiv.innerHTML = '';
-      let total=0;
+      let total=0, sumD=0, sumA=0, sumC=0, sumAg=0;
+
       ventas.forEach(v=>{
+        sumD += v.desayuno;
+        sumA += v.almuerzo;
+        sumC += v.cena;
+        sumAg += v.agua;
         const sub = v.desayuno*precios.desayuno 
                   + v.almuerzo*precios.almuerzo
                   + v.cena*precios.cena 
@@ -89,10 +99,17 @@
         d.textContent = `${v.fecha} — Desayuno: ${v.desayuno}, Almuerzo: ${v.almuerzo}, Cena: ${v.cena}, Bidón de Agua: ${v.agua} → ₡${sub}`;
         historialDiv.appendChild(d);
       });
-      totalSpan.textContent = total;
+
+      // Actualizar totales por producto
+      tdDesayuno.textContent = sumD;
+      tdAlmuerzo.textContent = sumA;
+      tdCena.textContent     = sumC;
+      tdAgua.textContent     = sumAg;
+      totalSpan.textContent  = total;
     }
 
-    document.getElementById('venta-form').addEventListener('submit',e=>{
+    // Formularios y botones
+    document.getElementById('venta-form').addEventListener('submit', e=>{
       e.preventDefault();
       const v = {
         fecha: document.getElementById('fecha').value,
@@ -105,30 +122,31 @@
       if(v.desayuno<0||v.almuerzo<0||v.cena<0||v.agua<0) return alert('Cantidades ≥ 0');
       let arr = JSON.parse(localStorage.getItem('ventas')||'[]');
       arr.push(v);
-      localStorage.setItem('ventas',JSON.stringify(arr));
+      localStorage.setItem('ventas', JSON.stringify(arr));
       cargarHistorial();
       e.target.reset();
     });
 
-    document.getElementById('reiniciar').onclick = ()=>{
-      if(confirm('¿Borrar todo el historial?')){
+    document.getElementById('reiniciar').onclick = () => {
+      if(confirm('¿Borrar todo el historial?')) {
         localStorage.removeItem('ventas');
         cargarHistorial();
       }
     };
 
-    document.getElementById('descargarPDF').onclick = async ()=>{
+    document.getElementById('descargarPDF').onclick = async () => {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
-      // Solo capturamos el div de historial
+      // Capturamos solo el div “historial”
       const canvas = await html2canvas(historialDiv);
       const img = canvas.toDataURL('image/png');
       const w = doc.internal.pageSize.getWidth();
       const h = (canvas.height * w) / canvas.width;
-      doc.addImage(img,'PNG',0,0,w,h);
+      doc.addImage(img, 'PNG', 0, 0, w, h);
       doc.save('historial_captura.pdf');
     };
 
+    // Inicializar vista
     cargarHistorial();
   </script>
 </body>
