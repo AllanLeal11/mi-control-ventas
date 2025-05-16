@@ -1,111 +1,133 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Guanafood - Historial</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guanafood – Historial Completo</title>
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3075/3075977.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { padding: 20px; background: #f9f9f9; }
-    .venta-item { border-bottom: 1px solid #ccc; padding: 5px 0; }
-    #resultado { max-height: 400px; overflow-y: auto; margin-bottom: 1em; }
-    .totales-producto { margin-bottom: 1em; }
+    body { background: #f0f2f5; padding: 20px; }
+    #filterTable tbody tr:hover { background: #e9f7ef; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1 class="mb-4">Historial de Ventas</h1>
+    <h1 class="mb-4">Historial Completo de Ventas</h1>
 
-    <!-- Filtros de fecha -->
-    <div class="row mb-3">
+    <!-- Filtros -->
+    <div class="row g-3 mb-4">
       <div class="col-md-4">
-        <label for="desde" class="form-label">Desde</label>
-        <input type="date" id="desde" class="form-control">
+        <label class="form-label">Desde</label>
+        <input type="date" id="from" class="form-control">
       </div>
       <div class="col-md-4">
-        <label for="hasta" class="form-label">Hasta</label>
-        <input type="date" id="hasta" class="form-control">
+        <label class="form-label">Hasta</label>
+        <input type="date" id="to" class="form-control">
       </div>
-      <div class="col-md-4 d-flex align-items-end">
-        <button class="btn btn-primary w-100" onclick="filtrar()">Filtrar</button>
+      <div class="col-md-4 d-grid">
+        <button class="btn btn-primary mt-4" onclick="applyFilter()">Filtrar</button>
       </div>
     </div>
 
-    <!-- Totales por producto en el rango -->
-    <div class="totales-producto">
-      <h5>Totales por producto (filtrado)</h5>
-      <ul>
-        <li>Desayunos: <strong><span id="td-desayuno">0</span></strong></li>
-        <li>Almuerzos: <strong><span id="td-almuerzo">0</span></strong></li>
-        <li>Cenas:     <strong><span id="td-cena">0</span></strong></li>
-        <li>Bidones:   <strong><span id="td-agua">0</span></strong></li>
-      </ul>
+    <!-- Tabla filtrada -->
+    <div class="table-responsive mb-3">
+      <table id="filterTable" class="table table-striped align-middle">
+        <thead class="table-success">
+          <tr>
+            <th>Fecha</th><th>Desayuno</th><th>Almuerzo</th>
+            <th>Cena</th><th>Bidón</th><th>Subtotal (₡)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot class="table-light">
+          <tr>
+            <th>Totales</th>
+            <td id="fTotalBf">0</td>
+            <td id="fTotalLn">0</td>
+            <td id="fTotalDi">0</td>
+            <td id="fTotalWt">0</td>
+            <td id="fTotalAll">₡0</td>
+          </tr>
+        </tfoot>
+      </table>
     </div>
 
-    <!-- Resultados filtrados -->
-    <div id="resultado"></div>
-    <p><strong>Total filtrado: ₡<span id="totalFiltrado">0</span></strong></p>
-
-    <button class="btn btn-success me-2" onclick="descargarPDF()">Descargar PDF</button>
-    <a href="index.html" class="btn btn-secondary">Volver</a>
+    <button class="btn btn-success me-2" onclick="downloadFilteredPDF()">📄 Descargar PDF</button>
+    <a href="index.html" class="btn btn-secondary">⬅️ Volver</a>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    const precios = { desayuno:2500, almuerzo:2500, cena:2500, agua:2000 };
-    const resultadoDiv = document.getElementById('resultado');
-    const totalSpan    = document.getElementById('totalFiltrado');
-    const tdD = document.getElementById('td-desayuno');
-    const tdA = document.getElementById('td-almuerzo');
-    const tdC = document.getElementById('td-cena');
-    const tdAg= document.getElementById('td-agua');
+    const prices = { bf:2500, ln:2500, di:2500, wt:2000 };
+    const tbody = document.querySelector('#filterTable tbody');
+    const totBf = document.getElementById('fTotalBf');
+    const totLn = document.getElementById('fTotalLn');
+    const totDi = document.getElementById('fTotalDi');
+    const totWt = document.getElementById('fTotalWt');
+    const totAll= document.getElementById('fTotalAll');
 
-    function filtrar() {
-      const desde = document.getElementById('desde').value;
-      const hasta = document.getElementById('hasta').value;
-      const ventas = JSON.parse(localStorage.getItem('ventas')||'[]');
-      resultadoDiv.innerHTML = '';
-      let total=0, sumD=0, sumA=0, sumC=0, sumAg=0;
-
-      ventas.forEach(v=>{
-        if((!desde||v.fecha>=desde) && (!hasta||v.fecha<=hasta)) {
-          sumD += v.desayuno;
-          sumA += v.almuerzo;
-          sumC += v.cena;
-          sumAg+= v.agua;
-          const sub = v.desayuno*precios.desayuno
-                    + v.almuerzo*precios.almuerzo
-                    + v.cena*precios.cena
-                    + v.agua*precios.agua;
-          total += sub;
-          const d = document.createElement('div');
-          d.className='venta-item';
-          d.textContent = `${v.fecha} — Desayuno: ${v.desayuno}, Almuerzo: ${v.almuerzo}, Cena: ${v.cena}, Bidón de Agua: ${v.agua} → ₡${sub}`;
-          resultadoDiv.appendChild(d);
+    function applyFilter() {
+      const from = document.getElementById('from').value;
+      const to   = document.getElementById('to').value;
+      const data = JSON.parse(localStorage.getItem('sales')||'[]');
+      tbody.innerHTML = '';
+      let sumB=0, sumL=0, sumD=0, sumW=0, sumT=0;
+      data.forEach(item=>{
+        if((!from||item.date>=from) && (!to||item.date<=to)) {
+          const sub = item.bf*prices.bf
+                    + item.ln*prices.ln
+                    + item.di*prices.di
+                    + item.wt*prices.wt;
+          sumB += item.bf;
+          sumL += item.ln;
+          sumD += item.di;
+          sumW += item.wt;
+          sumT += sub;
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${item.date}</td>
+            <td>${item.bf}</td>
+            <td>${item.ln}</td>
+            <td>${item.di}</td>
+            <td>${item.wt}</td>
+            <td>₡${sub}</td>`;
+          tbody.appendChild(tr);
         }
       });
-
-      tdD.textContent = sumD;
-      tdA.textContent = sumA;
-      tdC.textContent = sumC;
-      tdAg.textContent= sumAg;
-      totalSpan.textContent = total;
+      totBf.textContent = sumB;
+      totLn.textContent = sumL;
+      totDi.textContent = sumD;
+      totWt.textContent = sumW;
+      totAll.textContent= `₡${sumT}`;
     }
 
-    async function descargarPDF() {
+    function downloadFilteredPDF() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
-      const canvas = await html2canvas(resultadoDiv);
-      const img = canvas.toDataURL('image/png');
-      const w = doc.internal.pageSize.getWidth();
-      const h = (canvas.height * w) / canvas.width;
-      doc.addImage(img,'PNG',0,0,w,h);
+      doc.text('Guanafood – Historial Filtrado', 14, 16);
+      doc.autoTable({
+        startY: 20,
+        head: [[ 'Fecha','Desayuno','Almuerzo','Cena','Bidón','Subtotal (₡)' ]],
+        body: Array.from(tbody.querySelectorAll('tr')).map(r =>
+          Array.from(r.querySelectorAll('td')).map(td => td.textContent)
+        ),
+        foot: [[ 'Totales:',
+          totBf.textContent,
+          totLn.textContent,
+          totDi.textContent,
+          totWt.textContent,
+          totAll.textContent.replace('₡','') ]]
+      });
       doc.save('historial_filtrado.pdf');
     }
 
-    window.onload = filtrar;
+    // Al cargar, muestra todo
+    window.onload = applyFilter;
   </script>
 </body>
 </html>
+
